@@ -2,7 +2,7 @@ import pygame
 
 
 class Bird:
-    VELOCITY = -10
+    VELOCITY = -10.5
     GRAVITY = 3
 
     def __init__(self, pos_x, pos_y, bird_img):
@@ -22,6 +22,9 @@ class Bird:
         # projectile motion formular
         displacement = self.VELOCITY * self.time_since_jump + \
             0.5 * self.GRAVITY * self.time_since_jump ** 2
+
+        # limit falling speed
+        displacement = min(displacement, 15)
 
         self.pos_y += displacement
 

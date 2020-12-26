@@ -1,5 +1,5 @@
-import pygame
 import random
+import pygame
 from bird import Bird
 
 class Pipe:
