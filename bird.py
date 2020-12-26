@@ -19,7 +19,7 @@ class Bird:
     def move(self):
         self.time_since_jump += 1
 
-        # formular for projectile motion
+        # projectile motion formular
         displacement = self.VELOCITY * self.time_since_jump + \
             0.5 * self.GRAVITY * self.time_since_jump ** 2
 

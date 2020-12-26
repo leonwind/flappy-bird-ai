@@ -1,4 +1,5 @@
 import pygame
+from bird import Bird
 
 
 class Ground:
@@ -9,7 +10,16 @@ class Ground:
         self.end = ground_img.get_width()
         self.pos_y = pos_y
 
-        self.ground_img = ground_img
+        self.ground_img: pygame.Surface = ground_img
+
+    def is_colliding(self, bird: Bird) -> bool:
+        bird_mask = bird.get_mask()
+        ground_mask = pygame.mask.from_surface(self.ground_img)
+
+        offset = (bird.pos_x, round(bird.pos_y - self.pos_y))
+
+        is_overlapping = ground_mask.overlap(bird_mask, offset)
+        return is_overlapping
 
     def move(self):
         pass
