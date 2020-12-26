@@ -17,9 +17,12 @@ class Bird:
         self.time_since_jump = 0
 
     def move(self):
+        """
+        Move the bird using the projectile motion formular
+        Limit the maximum falling speed to let the bird glide 
+        """
         self.time_since_jump += 1
 
-        # projectile motion formular
         displacement = self.VELOCITY * self.time_since_jump + \
             0.5 * self.GRAVITY * self.time_since_jump ** 2
 

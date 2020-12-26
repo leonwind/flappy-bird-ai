@@ -1,4 +1,5 @@
 import os
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 from ground import Ground
 from bird import Bird
@@ -6,16 +7,15 @@ from pipe import Pipe
 
 
 class Game:
-
     IMG_PATH = "images/"
     WIDTH = 650
     HEIGHT = 1000
-    NUM_FPS = 30
     GROUND_HEIGHT = 850
+    PIPE_START_X = 700
+    SPACE_BETWEEN_PIPES = 400
     BIRD_X_POS = 150
     BIRD_Y_POS = 400
-    PIPE_START_X = 700
-    SPACE_BETWEEN_PIPES = WIDTH / 2
+    NUM_FPS = 30
 
     def __init__(self):
         self.window = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
@@ -33,9 +33,9 @@ class Game:
         self.ground = Ground(self.GROUND_HEIGHT, self.ground_img)
 
         self.bird = Bird(self.BIRD_X_POS, self.BIRD_Y_POS, self.bird_img)
-        self.bird.draw(self.window)
 
     def update_window(self, pipes: list[Pipe]):
+        """Update the position of the bird and the pipes in the game window"""
         self.window.blit(self.background_img, (0, 0))
         self.bird.draw(self.window)
 
@@ -45,8 +45,10 @@ class Game:
         self.ground.draw(self.window)
         pygame.display.update()
 
-    def run_game(self):
+    def run_game(self) -> int:
+        """Run the game and return the score"""
         clock = pygame.time.Clock()
+
 
         pipes = [Pipe(self.PIPE_START_X, self.pipe_img)]
         to_remove = set()
@@ -62,7 +64,6 @@ class Game:
                     self.bird.jump()
 
             if self.ground.is_colliding(self.bird):
-                print(score)
                 run = False
 
             for index, pipe in enumerate(pipes):
@@ -74,7 +75,6 @@ class Game:
                     continue
 
                 if pipe.is_colliding(self.bird):
-                    print(score)
                     run = False
 
                 if pipe.pos_x <= self.PIPE_START_X - self.SPACE_BETWEEN_PIPES and len(pipes) < 2:
@@ -92,8 +92,10 @@ class Game:
             self.update_window(pipes)
 
         pygame.quit()
+        return score
 
 
 if __name__ == "__main__":
     game = Game()
-    game.run_game()
+    score = game.run_game()
+    print("Score: {}".format(score))

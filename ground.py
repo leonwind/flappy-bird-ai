@@ -9,6 +9,7 @@ class Ground:
         self.ground_img: pygame.Surface = ground_img
 
     def is_colliding(self, bird: Bird) -> bool:
+        """Check if the bird is colliding with the ground"""
         bird_mask = bird.get_mask()
         ground_mask = pygame.mask.from_surface(self.ground_img)
 

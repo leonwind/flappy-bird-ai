@@ -2,6 +2,7 @@ import random
 import pygame
 from bird import Bird
 
+
 class Pipe:
     SPACE = 200
     VELOCITY = 5
@@ -19,6 +20,7 @@ class Pipe:
         self.passed = False
 
     def is_colliding(self, bird: Bird) -> bool:
+        """Check if the bird is colliding with either one of the pipe"""
         bird_mask = bird.get_mask()
         bottom_pipe_mask = pygame.mask.from_surface(self.bottom_img)
         top_pipe_mask = pygame.mask.from_surface(self.top_img)
@@ -32,6 +34,10 @@ class Pipe:
         return is_bottom_overlapping or is_top_overlapping
 
     def move(self):
+        """
+        Since the bird stays in a locked position, we move
+        the pipes to the left to simulate the bird moving
+        """
         self.pos_x -= self.VELOCITY
 
     def draw(self, window: pygame.Surface):
