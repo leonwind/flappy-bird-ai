@@ -3,7 +3,7 @@ import pygame
 
 class Bird:
     VELOCITY = -10
-    GRAVITY = 5
+    GRAVITY = 3
 
     def __init__(self, pos_x, pos_y, bird_img):
         self.pos_x = pos_x
@@ -26,7 +26,7 @@ class Bird:
         self.pos_y += displacement
 
     def get_mask(self) -> pygame.Mask:
-        return self.bird_img.get_mask()
+        return pygame.mask.from_surface(self.bird_img)
 
-    def draw(self):
-        pass
+    def draw(self, window: pygame.Surface):
+        window.blit(self.bird_img, (self.pos_x, self.pos_y))

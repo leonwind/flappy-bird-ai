@@ -10,7 +10,7 @@ class Pipe:
         self.pos_x = pos_x
 
         self.bottom_img: pygame.Surface = pipe_img
-        self.top_img: pygame.Surface = pygame.transform.flip(pipe_img, xbool=False, ybool=True)
+        self.top_img: pygame.Surface = pygame.transform.flip(pipe_img, False, True)
 
         height = random.randrange(50, 450)
         self.bottom_y = height + self.SPACE
@@ -20,8 +20,8 @@ class Pipe:
 
     def is_colliding(self, bird: Bird) -> bool:
         bird_mask = bird.get_mask()
-        bottom_pipe_mask = self.bottom_img.get_mask()
-        top_pipe_mask = self.top_img.get_mask()
+        bottom_pipe_mask = pygame.mask.from_surface(self.bottom_img)
+        top_pipe_mask = pygame.mask.from_surface(self.top_img)
 
         bottom_offset = (self.pos_x - bird.pos_x, round(self.bottom_y - bird.pos_y))
         top_offset = (self.pos_x - bird.pos_x, round(self.top_y - bird.pos_y))
@@ -34,6 +34,6 @@ class Pipe:
     def move(self):
         self.pos_x -= self.VELOCITY
 
-    def draw(self, game: pygame.Surface):
-        game.blit(self.bottom_img, (self.pos_x, self.bottom_y))
-        game.blit(self.top_img, (self.pos_x, self.top_y))
+    def draw(self, window: pygame.Surface):
+        window.blit(self.bottom_img, (self.pos_x, self.bottom_y))
+        window.blit(self.top_img, (self.pos_x, self.top_y))
