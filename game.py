@@ -31,7 +31,6 @@ class Game:
             pygame.image.load(os.path.join(self.IMG_PATH, "bird2.png")).convert_alpha())
 
         self.ground = Ground(self.GROUND_HEIGHT, self.ground_img)
-
         self.bird = Bird(self.BIRD_X_POS, self.BIRD_Y_POS, self.bird_img)
 
     def update_window(self, pipes: list[Pipe]):
@@ -48,7 +47,6 @@ class Game:
     def run_game(self) -> int:
         """Run the game and return the score"""
         clock = pygame.time.Clock()
-
 
         pipes = [Pipe(self.PIPE_START_X, self.pipe_img)]
         to_remove = set()

@@ -20,7 +20,10 @@ class Pipe:
         self.passed = False
 
     def is_colliding(self, bird: Bird) -> bool:
-        """Check if the bird is colliding with either one of the pipe"""
+        """
+        Check for pixel perfect collision between the bird  
+        and the pipes using masks
+        """
         bird_mask = bird.get_mask()
         bottom_pipe_mask = pygame.mask.from_surface(self.bottom_img)
         top_pipe_mask = pygame.mask.from_surface(self.top_img)

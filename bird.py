@@ -27,7 +27,7 @@ class Bird:
             0.5 * self.GRAVITY * self.time_since_jump ** 2
 
         # limit falling speed
-        displacement = min(displacement, 15)
+        displacement = min(displacement, 20)
 
         self.pos_y += displacement
 
