@@ -18,13 +18,13 @@ class Bird:
 
     def move(self):
         """
-        Move the bird using the projectile motion formular
+        Move the bird using the projectile motion formula
         Limit the maximum falling speed to let the bird glide 
         """
         self.time_since_jump += 1
 
         displacement = self.VELOCITY * self.time_since_jump + \
-            0.5 * self.GRAVITY * self.time_since_jump ** 2
+                       0.5 * self.GRAVITY * self.time_since_jump ** 2
 
         # limit falling speed
         displacement = min(displacement, 20)

@@ -1,34 +1,35 @@
 import random
-from genome_edge import GenomeEdge
-from genome_node import GenomeNode
+from typing import Optional, List
+
+from neat.genotype.genome_edge import GenomeEdge
+from neat.genotype.genome_node import GenomeNode
+
 
 class Genome:
 
     def __init__(self):
         self.fitness = 0
-
-        self.edges: list[GenomeEdge] = []
-        self.nodes: list[GenomeNode] = []
+        self.edges: List[GenomeEdge] = []
+        self.nodes: List[GenomeNode] = []
         self.node_ids = set()
         self.innovation_nums = set()
-        
         self.species = None
 
-    
     def add_connection_mutation(self):
         """
         Add a single new connection gene with a random weight connecting
         two previously unconnected nodes
         """
-        possible_inputs = [n for n in self.nodes if n.type != "output"]
-        possible_outputs = [n for n in self.nodes if n.type != "input"]
+        possible_inputs = [n for n in self.nodes if n.node_type != "output"]
+        possible_outputs = [n for n in self.nodes if n.node_type != "input"]
 
         if possible_inputs or possible_outputs:
             input_node: GenomeNode = random.choice(possible_inputs)
             output_node: GenomeNode = random.choice(possible_outputs)
 
             # TODO: check if connection is valid  
-            self._create_new_edge(input_node.id, output_node.id)
+            new_edge = self._create_new_edge(input_node.id, output_node.id)
+            self.edges.append(new_edge)
 
     def add_node_mutation(self):
         """
@@ -40,40 +41,72 @@ class Genome:
         edge_to_split: GenomeEdge = random.choice(self.edges)
         edge_to_split.is_enabled = False
 
-        new_node: GenomeNode = _create_new_node(len(self.nodes), "hidden")
-        self.nodes.append(new_node)
+        new_node: GenomeNode = self._create_new_node("hidden")
 
-        edge_a = self._create_new_edge(edge_to_split.from_id, new_node.id, weight=1)
-        edge_b = self._create_new_edge(new_node.id, edge_to_split.to_id, weight=edge_to_split.weight)
+        self._create_new_edge(edge_to_split.from_id, new_node.id, weight=1)
+        self._create_new_edge(new_node.id, edge_to_split.to_id, weight=edge_to_split.weight)
 
-        self.edges.append(edge_a)
-        self.edges.append(edge_b)
-
-    def get_num_excess_genes(self, external_genome: Genome):
+    def calculate_compatibility_distance(self, other_genome: Genome) -> int:
         """
-        Genes which do not match are excess genes if the 
-        innovation number of the nodes of this instance is greater than
-        the maximum innovation number of external_genome
+        Calculate the compatibility score of this genome instance and
+        other_genome. This implementation, like the most NEAT implementations,
+        does not differ between the excess and the disjoint genes.
         """
-        num_excess = 0
+        # TODO
+        distance = 0
 
-        max_innovation_num_external = max(external_genome.innovation_nums)
-
+        max_innovation_score = max(other_genome.innovation_nums)
         for edge in self.edges:
-            if edge.innovation_num > max_innovation_num_external:
-                num_excess += 1
+            if edge.innovation_num != max_innovation_score:
+                distance += 1
 
-        return num_excess
+        max_node_id = max([n.id for n in other_genome.nodes])
+        for node in self.nodes:
+            if node.id != max_node_id:
+                distance += 1
 
-    def get_num_disjoint_genes(self, external_genome: Genome):
+        return distance
+
+    def get_node_by_id(self, node_id) -> Optional[GenomeNode]:
         """
-        Genes which do not match are disjoint genes if the 
-        innovation number of the nodes of this instance is smaller than 
-        the maximum innovation number of external_genome
+        Return a genome node with the same id as node_id
+        :param node_id: target id
+        :return:
         """
-        num_disjoint = 0
+        for node in self.nodes:
+            if node.id == node_id:
+                return node
+        return None
 
-        return num_disjoint
+    def get_edge_by_innovation_num(self, innovation_num) -> Optional[GenomeEdge]:
+        """
+        Return a genome edge with innovation_num as its innovation number
+        :param innovation_num: target innovation number
+        :return:
+        """
+        for edge in self.edges:
+            if edge.innovation_num == innovation_num:
+                return edge
+        return None
+
+    def add_node_copy(self, copy_node: GenomeNode):
+        """
+
+        :param copy_node:
+        :return:
+        """
+        self.nodes.append(copy_node)
+
+    def add_edge_copy(self, copy_edge: GenomeEdge):
+        """
+
+        :param copy_edge:
+        :return:
+        """
+        self.node_ids.add(copy_edge.from_id)
+        self.node_ids.add(copy_edge.to_id)
+        self.innovation_nums.add(copy_edge.innovation_num)
+        self.edges.append(copy_edge)
 
     def _create_new_node(self, node_type) -> GenomeNode:
         new_node = GenomeNode(len(self.nodes), node_type)
@@ -86,4 +119,5 @@ class Genome:
         if weight is not None:
             new_edge.set_weight(weight)
 
-        return new_edge        
+        self.edges.append(new_edge)
+        return new_edge
