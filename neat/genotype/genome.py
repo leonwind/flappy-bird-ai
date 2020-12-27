@@ -67,6 +67,26 @@ class Genome:
 
         return distance
 
+    def calculate_avg_weight_difference(self, other_genome: Genome) -> float:
+        """
+        Calculate the average weight difference between this genome instance and
+        other_genome.
+        :param other_genome:
+        :return:
+        """
+        weight_diff = 0.0
+        num_weights = 0
+
+        for edge in self.edges:
+            matching_edge: GenomeEdge = other_genome.get_edge_by_innovtion_num(edge.innovation_num)
+            if matching_edge is not None:
+                weight_diff += float(edge.weight) - float(matching_edge.weight)
+                num_weights += 1
+
+        if num_weights == 0:
+            return weight_diff
+        return weight_diff / num_weights
+
     def get_node_by_id(self, node_id) -> Optional[GenomeNode]:
         """
         Return a genome node with the same id as node_id
