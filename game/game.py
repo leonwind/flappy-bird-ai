@@ -2,9 +2,10 @@ import os
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
-from ground import Ground
-from bird import Bird
-from pipe import Pipe
+
+from game.ground import Ground
+from game.bird import Bird
+from game.pipe import Pipe
 
 
 class Game:
