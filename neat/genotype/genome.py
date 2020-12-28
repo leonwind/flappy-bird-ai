@@ -13,7 +13,8 @@ class Genome:
         self.nodes: List[GenomeNode] = []
         self.node_ids = set()
         self.innovation_nums = set()
-        self.species = None
+        # the id of the Specie
+        self.specie: Optional[int] = None
 
     def add_connection_mutation(self):
         """
@@ -28,7 +29,7 @@ class Genome:
             output_node: GenomeNode = random.choice(possible_outputs)
 
             # TODO: check if connection is valid  
-            new_edge = self._create_new_edge(input_node.id, output_node.id)
+            new_edge = self.create_new_edge(input_node.id, output_node.id)
             self.edges.append(new_edge)
 
     def add_node_mutation(self):
@@ -41,10 +42,10 @@ class Genome:
         edge_to_split: GenomeEdge = random.choice(self.edges)
         edge_to_split.is_enabled = False
 
-        new_node: GenomeNode = self._create_new_node("hidden")
+        new_node: GenomeNode = self.create_new_node("hidden")
 
-        self._create_new_edge(edge_to_split.from_id, new_node.id, weight=1)
-        self._create_new_edge(new_node.id, edge_to_split.to_id, weight=edge_to_split.weight)
+        self.create_new_edge(edge_to_split.from_id, new_node.id, weight=1)
+        self.create_new_edge(new_node.id, edge_to_split.to_id, weight=edge_to_split.weight)
 
     def calculate_compatibility_distance(self, other_genome: Genome) -> int:
         """
@@ -128,12 +129,12 @@ class Genome:
         self.innovation_nums.add(copy_edge.innovation_num)
         self.edges.append(copy_edge)
 
-    def _create_new_node(self, node_type) -> GenomeNode:
+    def create_new_node(self, node_type) -> GenomeNode:
         new_node = GenomeNode(len(self.nodes), node_type)
         self.nodes.append(new_node)
         return new_node
 
-    def _create_new_edge(self, input_node_id, output_node_id, is_enabled=True, weight=None) -> GenomeEdge:
+    def create_new_edge(self, input_node_id, output_node_id, is_enabled=True, weight=None) -> GenomeEdge:
         new_edge = GenomeEdge(input_node_id, output_node_id, is_enabled)
 
         if weight is not None:
