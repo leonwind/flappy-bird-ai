@@ -20,16 +20,16 @@ class Config:
         :param change_connection_mutation_rate:
         The rate of which each connection does get changed
         :param change_weight_mutation_rate:
-         The rate of a connection to be changed just is slightly modifying its rate.
-         If not, a new random weight gets chosen
+        The rate of a connection to be changed just is slightly modifying its rate.
+        If not, a new random weight gets chosen
         :param add_node_mutation_rate:
         The rate of which a new node gets inserted into an existing connection
         :param add_connection_mutation_rate:
         The rate of which a new connection gets inserted
         :param reenable_connection_rate:
-         The rate of which a disabled connection gets re enabled again
+        The rate of which a disabled connection gets re enabled again
         :param species_elitism:
-         The number of species which survive
+        The number of species which survive
         :param max_stagnation:
         The maximum time which is a specie allowed to stagnate
         :param population_size:
@@ -58,5 +58,3 @@ class Config:
         self.num_of_generations = num_of_generations
         self.species_difference = species_difference
         self.genomes_to_save = genomes_to_save
-
-

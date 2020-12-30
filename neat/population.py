@@ -72,20 +72,32 @@ class Population:
                     self.best_genome = genome
                     self.best_fitness = genome.fitness
 
+            min_fitness = float("inf")
+            max_fitness = float("-inf")
+
             for specie, is_stagnant in Specie.stagnation(self.species, curr_gen, self.config):
                 if is_stagnant:
                     self.species.remove(specie)
+                else:
+                    for genome in specie.members:
+                        min_fitness = min(min_fitness, genome.fitness)
+                        max_fitness = max(max_fitness, genome.fitness)
 
-            # TODO: proper calculate the adjusted fitness
+            sum_adjusted_fitness = 0
+
+            # should be at least one for adjusted fitness formula
+            diff_fitness = max(1, max_fitness - min_fitness)
             for specie in self.species:
                 avg_specie_fitness = np.mean([genome.fitness for genome in specie.members])
-                specie.adjusted_fitness = avg_specie_fitness
+                adjusted_fitness = (avg_specie_fitness - min_fitness) / diff_fitness
+                specie.adjusted_fitness = adjusted_fitness
+                sum_adjusted_fitness += adjusted_fitness
 
             new_population: List[Genome] = []
             for specie in self.species:
                 if specie.adjusted_fitness > 0:
-                    # TODO: proper calculate the new size
-                    size = 3
+                    size = max(2, int((specie.adjusted_fitness / sum_adjusted_fitness) *
+                                      self.config.population_size))
                 else:
                     size = 2
 
@@ -104,5 +116,8 @@ class Population:
                     child: Genome = Crossover.crossover(parent_a, parent_b, self.config)
                     Mutation.mutate(child, self.config)
                     new_population.append(child)
+
+            for genome in new_population:
+                self._assign_specie(genome, curr_gen)
 
             self.population = new_population

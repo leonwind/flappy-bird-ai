@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from neat.neural_nets.activations import Activations
 from neat.config import Config
 from neat.genotype.genome import Genome
 from neat.genotype.genome_edge import GenomeEdge
