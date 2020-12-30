@@ -96,11 +96,12 @@ class Population:
                 purge_index = max(2, round(self.config.genomes_to_save * len(survivors)))
                 survivors = survivors[:purge_index]
 
+                # TODO: Always add the best genome in specie?
                 for i in range(size):
                     parent_a: Genome = random.choice(survivors)
                     parent_b: Genome = random.choice(survivors)
 
-                    child: Genome = Crossover.crossover(parent_a, parent_b)
+                    child: Genome = Crossover.crossover(parent_a, parent_b, self.config)
                     Mutation.mutate(child, self.config)
                     new_population.append(child)
 

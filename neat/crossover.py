@@ -21,7 +21,7 @@ class Crossover:
         """
 
         child = Genome()
-        best_parent, other_parent = Crossover.order_parents(genome_a, genome_b)
+        best_parent, other_parent = Crossover._order_parents(genome_a, genome_b)
 
         for edge in best_parent.edges:
             matching_edge: Optional[GenomeEdge] = \
@@ -52,7 +52,7 @@ class Crossover:
         return child
 
     @staticmethod
-    def order_parents(genome_a: Genome, genome_b: Genome):
+    def _order_parents(genome_a: Genome, genome_b: Genome):
         """
         Order the parents of the new child in respect to the
         fitness
