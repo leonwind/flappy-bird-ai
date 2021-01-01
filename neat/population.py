@@ -15,8 +15,6 @@ class Population:
         self.config = config
         self.population: List[Genome] = self._create_new_population()
         self.species: List[Specie] = []
-        self.best_genome = None
-        self.best_fitness = float("-inf")
 
         for genome in self.population:
             self._assign_specie(genome, 0)
@@ -63,31 +61,25 @@ class Population:
 
     def run(self, evaluation_function):
         for curr_gen in range(self.config.num_of_generations):
+            print("GENERATION: {}".format(curr_gen))
             # run flappy bird and change the fitness of each genome depending how good
             # the bird of the genome plays
             evaluation_function(self.population, self.config)
 
-            for genome in self.population:
-                if genome.fitness > self.best_fitness:
-                    self.best_genome = genome
-                    self.best_fitness = genome.fitness
-
-            print("BEST FITNESS: {}".format(self.best_fitness))
             min_fitness = float("inf")
             max_fitness = float("-inf")
 
             for specie, is_stagnant in Specie.stagnation(self.species, curr_gen, self.config):
-                if is_stagnant:
+                if is_stagnant or not specie.members:
                     self.species.remove(specie)
                 else:
                     for genome in specie.members:
                         min_fitness = min(min_fitness, genome.fitness)
                         max_fitness = max(max_fitness, genome.fitness)
 
-            sum_adjusted_fitness = 0
-
             # should be at least one for adjusted fitness formula
             diff_fitness = max(1, max_fitness - min_fitness)
+            sum_adjusted_fitness = 0
             for specie in self.species:
                 avg_specie_fitness = np.mean([genome.fitness for genome in specie.members])
                 adjusted_fitness = (avg_specie_fitness - min_fitness) / diff_fitness
@@ -97,33 +89,35 @@ class Population:
             new_population: List[Genome] = []
             for specie in self.species:
                 if specie.adjusted_fitness > 0:
-                    size = max(2, int((specie.adjusted_fitness / sum_adjusted_fitness) *
-                                      self.config.population_size))
+                    size = int((specie.adjusted_fitness / sum_adjusted_fitness) * self.config.population_size)
                 else:
                     size = 2
 
                 survivors = specie.members
                 survivors.sort(key=lambda g: g.fitness, reverse=True)
+                # kill all old members
                 specie.members = []
 
-                purge_index = max(2, round(self.config.genomes_to_save * len(survivors)))
+                # keep at least 2 genomes
+                purge_index = max(2, int(self.config.genomes_to_save * len(survivors)))
                 survivors = survivors[:purge_index]
 
-                print("NEW CHILDS:")
                 # TODO: Always add the best genome in specie?
                 for i in range(size):
                     parent_a: Genome = random.choice(survivors)
                     parent_b: Genome = random.choice(survivors)
 
-                    print("PARENT A:")
-                    print(parent_a)
-                    print("PARENT B:")
-                    print(parent_b)
+                    #print(parent_a)
+                    #print(parent_b)
 
                     child: Genome = Crossover.crossover(parent_a, parent_b, self.config)
-                    print(child)
+                    #print("BEFORE MUTATION")
+                    #print(child)
                     Mutation.mutate(child, self.config)
-                    new_population.append(child)
+                    #print("AFTER MUTATION")
+                    #print(child)
+                    if len(new_population) < self.config.population_size:
+                        new_population.append(child)
 
             for genome in new_population:
                 self._assign_specie(genome, curr_gen)

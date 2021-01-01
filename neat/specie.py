@@ -49,7 +49,7 @@ class Specie:
             else:
                 max_fitness = float("-inf")
 
-            specie.fitness = max([g.fitness for g in specie.members])
+            specie.fitness = max([g.fitness for g in specie.members], default=0)
             specie.fitness_history.append(specie.fitness)
             specie.adjusted_fitness = None
 

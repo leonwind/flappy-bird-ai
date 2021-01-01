@@ -44,10 +44,13 @@ class FeedForwardNet:
             node_weights[node.id] = inputs[node.id]
             queue.append(node.id)
 
+       # print(self.network_graph)
+
         while queue:
             front = queue.popleft()
             if front in self.output_ids:
                 continue
+
             for neighbor, edge_weight in self.network_graph[front]:
                 if neighbor in node_weights:
                     node_weights[neighbor] *= edge_weight
@@ -60,6 +63,8 @@ class FeedForwardNet:
     @staticmethod
     def create(genome: Genome, config: Config) -> FeedForwardNet:
         """Receives a genome and returns its phenotype (Feed forward neural net)"""
+        #print(genome)
+
         input_nodes = []
         output_nodes = []
         output_ids = set()
@@ -79,8 +84,6 @@ class FeedForwardNet:
                 network_graph[edge.from_id].append((edge.to_id, edge.weight))
             else:
                 network_graph[edge.from_id] = [(edge.to_id, edge.weight)]
-
-        print(network_graph)
 
         activation_function = Activations.get(config.activation_function)
         return FeedForwardNet(

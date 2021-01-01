@@ -25,13 +25,15 @@ class Genome:
         possible_inputs = [n for n in self.nodes if n.node_type != "output"]
         possible_outputs = [n for n in self.nodes if n.node_type != "input"]
 
-        if possible_inputs or possible_outputs:
+        while possible_inputs and possible_outputs:
             input_node: GenomeNode = random.choice(possible_inputs)
             output_node: GenomeNode = random.choice(possible_outputs)
 
-            # TODO: check if connection is valid  
             new_edge = self.create_new_edge(input_node.id, output_node.id)
-            self.edges.append(new_edge)
+            if new_edge is not None:
+                return
+            possible_inputs.remove(input_node)
+            possible_outputs.remove(output_node)
 
     def add_node_mutation(self):
         """
@@ -54,7 +56,7 @@ class Genome:
         other_genome. This implementation, like the most NEAT implementations,
         does not differ between the excess and the disjoint genes.
         """
-        # TODO
+        # TODO: Verify the score calculation
         distance = 0
 
         max_innovation_score = max(other_genome.innovation_nums, default=0)
@@ -117,32 +119,72 @@ class Genome:
         :param copy_node:
         :return:
         """
-        self.nodes.append(copy_node)
+        self.nodes.append(GenomeNode(copy_node.id, copy_node.node_type))
 
     def add_edge_copy(self, copy_edge: GenomeEdge):
         """
-
         :param copy_edge:
         :return:
         """
-        self.node_ids.add(copy_edge.from_id)
-        self.node_ids.add(copy_edge.to_id)
-        self.innovation_nums.add(copy_edge.innovation_num)
-        self.edges.append(copy_edge)
+        new_edge = GenomeEdge(copy_edge.from_id, copy_edge.to_id, copy_edge.is_enabled)
+        new_edge.set_weight(copy_edge.weight)
+        new_edge.set_innovation_num(copy_edge.innovation_num)
+
+        if self._is_valid_new_edge(new_edge.from_id, new_edge.to_id):
+            self.edges.append(new_edge)
+            self.node_ids.add(new_edge.from_id)
+            self.node_ids.add(new_edge.to_id)
+            self.innovation_nums.add(new_edge.innovation_num)
+        else:
+            print("NOT VALID")
+            print(new_edge)
 
     def create_new_node(self, node_type) -> GenomeNode:
         new_node = GenomeNode(len(self.nodes), node_type)
         self.nodes.append(new_node)
         return new_node
 
-    def create_new_edge(self, input_node_id, output_node_id, is_enabled=True, weight=None) -> GenomeEdge:
+    def create_new_edge(self, input_node_id, output_node_id, is_enabled=True, weight=None) -> Optional[GenomeEdge]:
         new_edge = GenomeEdge(input_node_id, output_node_id, is_enabled)
 
         if weight is not None:
             new_edge.set_weight(weight)
 
-        self.edges.append(new_edge)
-        return new_edge
+        if self._is_valid_new_edge(new_edge.from_id, new_edge.to_id):
+            self.edges.append(new_edge)
+            return new_edge
+        return None
+
+    def _is_valid_new_edge(self, from_id, to_id) -> bool:
+        return not self._connection_exists(from_id, to_id) and \
+               not self._creates_cycle(from_id, to_id)
+
+    def _connection_exists(self, from_id, to_id) -> bool:
+        """Check if a given edge already exists in the graph"""
+        for edge in self.edges:
+            if edge.from_id == from_id and edge.to_id == to_id:
+                return True
+        return False
+
+    def _creates_cycle(self, from_id, to_id) -> bool:
+        """Check if a given edge creates a cycle in the graph"""
+        if from_id == to_id:
+            return True
+
+        visited = set()
+        visited.add(from_id)
+
+        while True:
+            num_added = 0
+            for edge in self.edges:
+                if edge.to_id in visited and edge.from_id not in visited:
+                    if edge.from_id == to_id:
+                        return True
+                    visited.add(edge.from_id)
+                    num_added += 1
+
+            if num_added == 0:
+                return False
 
     def __str__(self):
         ret = "Nodes: "
