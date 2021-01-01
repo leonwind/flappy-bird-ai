@@ -20,8 +20,9 @@ class Ground:
 
         offset = (bird.pos_x, round(bird.pos_y - self.pos_y))
 
-        is_overlapping = ground_mask.overlap(bird_mask, offset)
-        return is_overlapping
+        is_overlapping: bool = ground_mask.overlap(bird_mask, offset) is not None
+        is_too_high = bird.pos_y <= 0
+        return is_overlapping or is_too_high
 
     def draw(self, window: pygame.Surface):
         window.blit(self.ground_img, (0, self.pos_y))

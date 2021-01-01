@@ -14,13 +14,13 @@ class Mutation:
         :param genome: The genome to mutate
         :param config: The configuration with the mutation parameters
         """
-        if utils.rand_uni_val() < config.change_connection_mutation_rate:
+        if utils.rand_uni_val() < config.connection_mutation_rate:
             for edge in genome.edges:
                 if utils.rand_uni_val() < config.change_weight_mutation_rate:
                     difference = utils.rand_uni_val() * utils.pos_or_neg()
                     edge.weight += difference
                 else:
-                    edge.generate_weight_random()
+                    edge.generate_random_weight()
 
         if utils.rand_uni_val() < config.add_node_mutation_rate:
             genome.add_node_mutation()

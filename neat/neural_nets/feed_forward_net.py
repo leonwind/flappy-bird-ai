@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Set
 from collections import deque
 
 from neat.neural_nets.activations import Activations
@@ -16,12 +16,14 @@ class FeedForwardNet:
             self,
             input_neurons: List[GenomeNode],
             output_neurons: List[GenomeNode],
+            output_ids: Set[int],
             network_graph: Dict[int, List[Tuple[int, float]]],
             activation_function: ActivationFunction,
             config: Config
     ):
         self.input_neurons: List[GenomeNode] = input_neurons
         self.output_neurons: List[GenomeNode] = output_neurons
+        self.output_ids = output_ids
         self.network_graph: Dict[int, List[Tuple[int, float]]] = network_graph
         self.activation_function: ActivationFunction = activation_function
         self.config: Config = config
@@ -44,7 +46,9 @@ class FeedForwardNet:
 
         while queue:
             front = queue.popleft()
-            for neighbor, edge_weight in self.network_graph:
+            if front in self.output_ids:
+                continue
+            for neighbor, edge_weight in self.network_graph[front]:
                 if neighbor in node_weights:
                     node_weights[neighbor] *= edge_weight
                 else:
@@ -58,12 +62,14 @@ class FeedForwardNet:
         """Receives a genome and returns its phenotype (Feed forward neural net)"""
         input_nodes = []
         output_nodes = []
+        output_ids = set()
 
         for node in genome.nodes:
             if node.node_type == "input":
                 input_nodes.append(node)
             elif node.node_type == "output":
                 output_nodes.append(node)
+                output_ids.add(node.id)
 
         edges: List[GenomeEdge] = [edge for edge in genome.edges if edge.is_enabled]
         network_graph: Dict[int, List[Tuple[int, float]]] = {}
@@ -74,5 +80,14 @@ class FeedForwardNet:
             else:
                 network_graph[edge.from_id] = [(edge.to_id, edge.weight)]
 
+        print(network_graph)
+
         activation_function = Activations.get(config.activation_function)
-        return FeedForwardNet(input_nodes, output_nodes, network_graph, activation_function, config)
+        return FeedForwardNet(
+            input_nodes,
+            output_nodes,
+            output_ids,
+            network_graph,
+            activation_function,
+            config
+        )

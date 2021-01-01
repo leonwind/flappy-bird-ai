@@ -6,6 +6,8 @@ from flappy_bird.bird import Bird
 class Pipe:
     SPACE = 200
     VELOCITY = 5
+    MIN_HEIGHT = 50
+    MAX_HEIGHT = 450
 
     def __init__(self, pos_x, pipe_img):
         self.pos_x = pos_x
@@ -13,7 +15,7 @@ class Pipe:
         self.bottom_img: pygame.Surface = pipe_img
         self.top_img: pygame.Surface = pygame.transform.flip(pipe_img, False, True)
 
-        height = random.randrange(50, 450)
+        height = random.randrange(self.MIN_HEIGHT, self.MAX_HEIGHT)
         self.bottom_y = height + self.SPACE
         self.top_y = height - self.top_img.get_height()
 
@@ -31,8 +33,10 @@ class Pipe:
         bottom_offset = (self.pos_x - bird.pos_x, round(self.bottom_y - bird.pos_y))
         top_offset = (self.pos_x - bird.pos_x, round(self.top_y - bird.pos_y))
 
-        is_bottom_overlapping = bird_mask.overlap(bottom_pipe_mask, bottom_offset)
-        is_top_overlapping = bird_mask.overlap(top_pipe_mask, top_offset)
+        is_bottom_overlapping: bool = \
+            bird_mask.overlap(bottom_pipe_mask, bottom_offset) is not None
+        is_top_overlapping: bool = \
+            bird_mask.overlap(top_pipe_mask, top_offset) is not None
 
         return is_bottom_overlapping or is_top_overlapping
 

@@ -2,7 +2,7 @@ class Config:
 
     def __init__(
             self,
-            change_connection_mutation_rate,
+            connection_mutation_rate,
             change_weight_mutation_rate,
             add_node_mutation_rate,
             add_connection_mutation_rate,
@@ -18,7 +18,7 @@ class Config:
             activation_function
     ):
         """
-        :param change_connection_mutation_rate:
+        :param connection_mutation_rate:
         The rate of which each connection does get changed
         :param change_weight_mutation_rate:
         The rate of a connection to be changed just is slightly modifying its rate.
@@ -48,7 +48,7 @@ class Config:
         :param activation_function:
         Which activation to use for the neural net
         """
-        self.change_connection_mutation_rate = change_connection_mutation_rate
+        self.connection_mutation_rate = connection_mutation_rate
         self.change_weight_mutation_rate = change_weight_mutation_rate
         self.add_node_mutation_rate = add_node_mutation_rate
         self.add_connection_mutation_rate = add_connection_mutation_rate

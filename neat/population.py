@@ -65,13 +65,14 @@ class Population:
         for curr_gen in range(self.config.num_of_generations):
             # run flappy bird and change the fitness of each genome depending how good
             # the bird of the genome plays
-            evaluation_function(self.population)
+            evaluation_function(self.population, self.config)
 
             for genome in self.population:
                 if genome.fitness > self.best_fitness:
                     self.best_genome = genome
                     self.best_fitness = genome.fitness
 
+            print("BEST FITNESS: {}".format(self.best_fitness))
             min_fitness = float("inf")
             max_fitness = float("-inf")
 
@@ -108,12 +109,19 @@ class Population:
                 purge_index = max(2, round(self.config.genomes_to_save * len(survivors)))
                 survivors = survivors[:purge_index]
 
+                print("NEW CHILDS:")
                 # TODO: Always add the best genome in specie?
                 for i in range(size):
                     parent_a: Genome = random.choice(survivors)
                     parent_b: Genome = random.choice(survivors)
 
+                    print("PARENT A:")
+                    print(parent_a)
+                    print("PARENT B:")
+                    print(parent_b)
+
                     child: Genome = Crossover.crossover(parent_a, parent_b, self.config)
+                    print(child)
                     Mutation.mutate(child, self.config)
                     new_population.append(child)
 

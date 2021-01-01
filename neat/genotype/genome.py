@@ -57,7 +57,7 @@ class Genome:
         # TODO
         distance = 0
 
-        max_innovation_score = max(other_genome.innovation_nums)
+        max_innovation_score = max(other_genome.innovation_nums, default=0)
         for edge in self.edges:
             if edge.innovation_num != max_innovation_score:
                 distance += 1
@@ -80,7 +80,7 @@ class Genome:
         num_weights = 0
 
         for edge in self.edges:
-            matching_edge: GenomeEdge = other_genome.get_edge_by_innovtion_num(edge.innovation_num)
+            matching_edge: GenomeEdge = other_genome.get_edge_by_innovation_num(edge.innovation_num)
             if matching_edge is not None:
                 weight_diff += float(edge.weight) - float(matching_edge.weight)
                 num_weights += 1
@@ -143,3 +143,13 @@ class Genome:
 
         self.edges.append(new_edge)
         return new_edge
+
+    def __str__(self):
+        ret = "Nodes: "
+        for node in self.nodes:
+            ret += node.__str__() + " "
+
+        ret += "\nEdges:\n"
+        for edge in self.edges:
+            ret += edge.__str__() + "\n"
+        return ret

@@ -11,17 +11,17 @@ from neat.config import Config
 class Crossover:
 
     @staticmethod
-    def crossover(genome_a: Genome, genome_b: Genome, config: Config) -> Genome:
+    def crossover(parent_a: Genome, parent_b: Genome, config: Config) -> Genome:
         """
         Crossover two Genomes instances
-        :param genome_a:
-        :param genome_b:
+        :param parent_a:
+        :param parent_b:
         :param config:
         :return: Return the child of genome_a and genome_b
         """
 
         child = Genome()
-        best_parent, other_parent = Crossover._order_parents(genome_a, genome_b)
+        best_parent, other_parent = Crossover._order_parents(parent_a, parent_b)
 
         for edge in best_parent.edges:
             matching_edge: Optional[GenomeEdge] = \

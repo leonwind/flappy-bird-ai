@@ -4,10 +4,12 @@ import pygame
 class Bird:
     VELOCITY = -10.5
     GRAVITY = 3
+    MAX_DISPLACEMENT = 20
 
     def __init__(self, pos_x, pos_y, bird_img):
         self.pos_x = pos_x
         self.pos_y = pos_y
+        self.alive = True
         self.time_since_jump = 0
 
         self.bird_img: pygame.Surface = bird_img
@@ -26,7 +28,7 @@ class Bird:
             self.VELOCITY * self.time_since_jump + 0.5 * self.GRAVITY * self.time_since_jump ** 2
 
         # limit falling speed
-        displacement = min(displacement, 20)
+        displacement = min(displacement, self.MAX_DISPLACEMENT)
 
         self.pos_y += displacement
 
