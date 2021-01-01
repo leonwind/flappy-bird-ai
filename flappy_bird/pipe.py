@@ -1,6 +1,6 @@
 import random
 import pygame
-from game.bird import Bird
+from flappy_bird.bird import Bird
 
 
 class Pipe:

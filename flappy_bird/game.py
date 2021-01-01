@@ -1,11 +1,9 @@
 import os
-
-os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
-
-from game.ground import Ground
-from game.bird import Bird
-from game.pipe import Pipe
+import argparse
+from flappy_bird.ground import Ground
+from flappy_bird.bird import Bird
+from flappy_bird.pipe import Pipe
 
 
 class Game:
@@ -46,7 +44,10 @@ class Game:
         self.ground.draw(self.window)
         pygame.display.update()
 
-    def run_game(self) -> int:
+    def create_population(self):
+        pass
+
+    def play_game(self) -> int:
         """Run the game and return the score"""
         clock = pygame.time.Clock()
 
@@ -54,7 +55,6 @@ class Game:
         to_remove = set()
 
         score = 0
-
         run = True
         while run:
             clock.tick(self.NUM_FPS)
@@ -96,6 +96,14 @@ class Game:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Play the game flappy bird")
+    parser.add_argument("-play", action="store_true")
+    args = parser.parse_args()
+
     game = Game()
-    score = game.run_game()
-    print("Score: {}".format(score))
+    if args.play or True:
+        # Let the player play flappy bird
+        print("Score: {}".format(game.play_game()))
+    else:
+        # Let the AI play flappy bird
+        game.create_population()
