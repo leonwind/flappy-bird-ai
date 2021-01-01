@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import List, Optional
+from typing import List, Dict, Tuple
+from collections import deque
 
 from neat.neural_nets.activations import Activations
 from neat.neural_nets.activations import ActivationFunction
@@ -15,23 +16,46 @@ class FeedForwardNet:
             self,
             input_neurons: List[GenomeNode],
             output_neurons: List[GenomeNode],
+            network_graph: Dict[int, List[Tuple[int, float]]],
             activation_function: ActivationFunction,
             config: Config
     ):
         self.input_neurons: List[GenomeNode] = input_neurons
         self.output_neurons: List[GenomeNode] = output_neurons
+        self.network_graph: Dict[int, List[Tuple[int, float]]] = network_graph
         self.activation_function: ActivationFunction = activation_function
         self.config: Config = config
 
-    def activate(self) -> float:
-        """Activate the neural net and return its output"""
-        pass
+    def activate(self, inputs) -> List[float]:
+        """
+        Activate the neural net and return the outputs for each output neuron
+        :param inputs: The input values for the neural net provided by flappy bird
+        :return List[float]: Values for all the output neurons applied with the activation function
+        """
+        if len(inputs) != len(self.input_neurons):
+            raise RuntimeError(
+                "Expected {0:n} inputs, got {1:n}".format(len(self.input_neurons), len(inputs)))
+
+        node_weights = {}
+        queue = deque()
+        for node, value in zip(self.input_neurons, inputs):
+            node_weights[node.id] = inputs[node.id]
+            queue.append(node.id)
+
+        while queue:
+            front = queue.popleft()
+            for neighbor, edge_weight in self.network_graph:
+                if neighbor in node_weights:
+                    node_weights[neighbor] *= edge_weight
+                else:
+                    node_weights[neighbor] = node_weights[front] * edge_weight
+                queue.append(neighbor)
+
+        return [self.activation_function(node_weights[node.id]) for node in self.output_neurons]
 
     @staticmethod
     def create(genome: Genome, config: Config) -> FeedForwardNet:
-        """Generate a feed forward neural network from a given genome"""
-        edges: List[GenomeEdge] = [edge for edge in genome.edges if edge.is_enabled]
-
+        """Receives a genome and returns its phenotype (Feed forward neural net)"""
         input_nodes = []
         output_nodes = []
 
@@ -41,5 +65,14 @@ class FeedForwardNet:
             elif node.node_type == "output":
                 output_nodes.append(node)
 
+        edges: List[GenomeEdge] = [edge for edge in genome.edges if edge.is_enabled]
+        network_graph: Dict[int, List[Tuple[int, float]]] = {}
+
+        for edge in edges:
+            if edge.from_id in network_graph:
+                network_graph[edge.from_id].append((edge.to_id, edge.weight))
+            else:
+                network_graph[edge.from_id] = [(edge.to_id, edge.weight)]
+
         activation_function = Activations.get(config.activation_function)
-        return FeedForwardNet(input_nodes, output_nodes, activation_function, config)
+        return FeedForwardNet(input_nodes, output_nodes, network_graph, activation_function, config)
