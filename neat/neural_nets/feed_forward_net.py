@@ -68,9 +68,9 @@ class FeedForwardNet:
         output_ids = set()
 
         for node in genome.nodes:
-            if node.node_type == "input":
+            if node.type == "input":
                 input_nodes.append(node)
-            elif node.node_type == "output":
+            elif node.type == "output":
                 output_nodes.append(node)
                 output_ids.add(node.id)
 

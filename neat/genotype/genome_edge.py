@@ -9,19 +9,15 @@ class GenomeEdge:
         self.is_enabled: bool = is_enabled
         self.weight = None
         self.generate_random_weight()
+        # The innovation number is an unique int to identify an edge between two nodes
+        # of different genomes
         self.innovation_num = self._calculate_innovation_num()
 
     def generate_random_weight(self):
         self.weight = np.random.normal(0, 1)
 
-    def set_weight(self, new_weight):
-        self.weight = new_weight
-
-    def set_innovation_num(self, new_innovation_num):
-        self.innovation_num = new_innovation_num
-
     def _calculate_innovation_num(self):
-        """generate unique innovation num for two nodes by using Cantors pairing function"""
+        """Generate unique innovation number for two nodes by using Cantors pairing function"""
         return 0.5 * (self.from_id + self.to_id) * (self.from_id + self.to_id + 1) + self.to_id
 
     def __str__(self):

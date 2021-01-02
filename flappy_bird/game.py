@@ -22,7 +22,7 @@ class Game:
     BIRD_START_X = 150
     BIRD_START_Y = 400
     NUM_FPS = 30
-    POPULATION_SIZE = 2
+    POPULATION_SIZE = 50
     TANH_THRESHOLD = 0.5
 
     def __init__(self):
@@ -41,15 +41,39 @@ class Game:
         self.ground = Ground(self.GROUND_HEIGHT, self.ground_img)
         self.high_score = -1
 
+    def create_population(self):
+        """Create a population for the neat algorithm"""
+        config: Config = Config(
+            connection_mutation_rate=0.8,
+            change_weight_mutation_rate=0.9,
+            add_node_mutation_rate=0.03,
+            add_connection_mutation_rate=0.5,
+            reenable_connection_rate=0.25,
+            species_elitism=1,
+            max_stagnation=5,
+            population_size=self.POPULATION_SIZE,
+            num_input_neurons=3,
+            num_output_neurons=1,
+            num_of_generations=150,
+            species_difference=2.5,
+            genomes_to_save=0.7,
+            activation_function="tanh"
+        )
+
+        population: Population = Population.create(config)
+        population.run(self.evaluate_genomes)
+
     def update_window(self, pipes: List[Pipe], birds: List[Bird]):
         """Update the position of the bird and the pipes in the game window"""
         self.window.blit(self.background_img, (0, 0))
 
         for bird in birds:
             if bird.alive:
+                bird.move()
                 bird.draw(self.window)
 
         for pipe in pipes:
+            pipe.move()
             pipe.draw(self.window)
 
         self.ground.draw(self.window)
@@ -65,8 +89,6 @@ class Game:
         passed_pipe = False
 
         for index, pipe in enumerate(pipes):
-            pipe.move()
-
             if pipe.passed:
                 if pipe.pos_x + self.pipe_img.get_width() <= 0:
                     to_remove.add(index)
@@ -88,28 +110,6 @@ class Game:
 
         front_pipe = pipes[0] if not pipes[0].passed else pipes[1]
         return front_pipe, passed_pipe, is_colliding
-
-    def create_population(self):
-        """Create a population for the neat algorithm"""
-        config: Config = Config(
-            connection_mutation_rate=0.8,
-            change_weight_mutation_rate=0.9,
-            add_node_mutation_rate=0.05,
-            add_connection_mutation_rate=0.5,
-            reenable_connection_rate=0.25,
-            species_elitism=1,
-            max_stagnation=10,
-            population_size=self.POPULATION_SIZE,
-            num_input_neurons=3,
-            num_output_neurons=1,
-            num_of_generations=150,
-            species_difference=3,
-            genomes_to_save=0.8,
-            activation_function="tanh"
-        )
-
-        population: Population = Population(config)
-        population.run(self.evaluate_genomes)
 
     def evaluate_genomes(self, genomes: List[Genome], config: Config):
         """
@@ -133,7 +133,7 @@ class Game:
         print("NUM BIRDS: {}".format(num_populations))
 
         run = True
-        while run:
+        while run and num_alive > 0:
             clock.tick(self.NUM_FPS)
 
             for i in range(num_populations):
@@ -146,20 +146,25 @@ class Game:
 
                 if passed_pipe:
                     scores[i] += 1
-                    genomes[i].fitness += 5
+                    genomes[i].fitness += 3
 
-                if is_colliding or self.ground.is_colliding(curr_bird):
+                if is_colliding:
                     curr_bird.alive = False
-                    genomes[i].fitness -= 1
-                    genomes[i].fitness = max(0, genomes[i].fitness)
                     num_alive -= 1
+                    genomes[i].fitness -= 1
+                    continue
+
+                if self.ground.is_colliding(curr_bird):
+                    curr_bird.alive = False
+                    num_alive -= 1
+                    genomes[i].fitness -= 2
                     continue
 
                 # use the height of the bird and the distance to the top and bottom
                 # pipe as the weights for the input neurons
                 input_weights = [curr_bird.pos_y,
-                                 curr_bird.pos_y - next_pipe.top_y,
-                                 curr_bird.pos_y - next_pipe.bottom_y]
+                                 abs(curr_bird.pos_y - next_pipe.top_y),
+                                 abs(curr_bird.pos_y - next_pipe.bottom_y)]
 
                 outputs = neural_nets[i].activate(input_weights)
                 if outputs[0] > self.TANH_THRESHOLD:
@@ -167,11 +172,6 @@ class Game:
 
                 # give extra 0.1 fitness for each frame the bird survives
                 genomes[i].fitness += 0.1
-
-                curr_bird.move()
-
-            if num_alive == 0:
-                run = False
 
             self.update_window(pipes, birds)
 
