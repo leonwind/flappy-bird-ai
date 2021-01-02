@@ -11,9 +11,10 @@ class Genome:
     def __init__(self):
         self.edges: List[GenomeEdge] = []
         self.nodes: List[GenomeNode] = []
-        self.fitness = 0
-        # save the innovation nums for faster lookup while calculating
-        # the edge distance
+        self.fitness = None
+        # save the node ids and the innovation nums for faster lookup
+        # while calculating the edge distance
+        self.node_ids = set()
         self.innovation_nums = set()
 
     def mutate_add_edge(self):
@@ -21,15 +22,14 @@ class Genome:
         possible_inputs = [node for node in self.nodes if node.type != "output"]
         possible_outputs = [node for node in self.nodes if node.type != "input"]
 
-        while possible_inputs and possible_outputs:
+        if possible_inputs and possible_outputs:
             from_node: GenomeNode = random.choice(possible_inputs)
             to_node: GenomeNode = random.choice(possible_outputs)
 
-            if self.create_new_edge(from_node.id, to_node.id):
-                break
+            self.create_new_edge(from_node.id, to_node.id)
 
-            possible_inputs.remove(from_node)
-            possible_outputs.remove(to_node)
+            #possible_inputs.remove(from_node)
+            #possible_outputs.remove(to_node)
 
     def mutate_add_node(self):
         """
@@ -61,6 +61,7 @@ class Genome:
             next_id = len(self.nodes)
         new_node = GenomeNode(next_id, node_type)
         self.nodes.append(new_node)
+        self.node_ids.add(next_id)
         return new_node
 
     def create_new_edge(self, from_id, to_id, is_enabled=True, weight=None) -> bool:

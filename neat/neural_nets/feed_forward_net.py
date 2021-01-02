@@ -92,3 +92,6 @@ class FeedForwardNet:
             activation_function,
             config
         )
+
+    def __str__(self):
+        return self.network_graph.__str__()

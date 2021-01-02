@@ -14,6 +14,7 @@ from neat.neural_nets.feed_forward_net import FeedForwardNet
 
 class Game:
     IMG_PATH = "flappy_bird/images/"
+
     WIDTH = 650
     HEIGHT = 1000
     GROUND_HEIGHT = 850
@@ -22,7 +23,7 @@ class Game:
     BIRD_START_X = 150
     BIRD_START_Y = 400
     NUM_FPS = 30
-    POPULATION_SIZE = 50
+    POPULATION_SIZE = 30
     TANH_THRESHOLD = 0.5
 
     def __init__(self):
@@ -38,6 +39,10 @@ class Game:
         self.bird_img: pygame.Surface = pygame.transform.scale2x(
             pygame.image.load(os.path.join(self.IMG_PATH, "bird2.png")).convert_alpha())
 
+        # init font
+        pygame.font.init()
+        self.font = pygame.font.SysFont("arial", 30)
+
         self.ground = Ground(self.GROUND_HEIGHT, self.ground_img)
         self.high_score = -1
 
@@ -46,7 +51,7 @@ class Game:
         config: Config = Config(
             connection_mutation_rate=0.8,
             change_weight_mutation_rate=0.9,
-            add_node_mutation_rate=0.03,
+            add_node_mutation_rate=0.1,
             add_connection_mutation_rate=0.5,
             reenable_connection_rate=0.25,
             species_elitism=1,
@@ -55,15 +60,16 @@ class Game:
             num_input_neurons=3,
             num_output_neurons=1,
             num_of_generations=150,
-            species_difference=2.5,
-            genomes_to_save=0.7,
+            species_difference=5,
+            genomes_to_save=0.4,
+            min_specie_size=2,
             activation_function="tanh"
         )
 
         population: Population = Population.create(config)
         population.run(self.evaluate_genomes)
 
-    def update_window(self, pipes: List[Pipe], birds: List[Bird]):
+    def update_window(self, pipes: List[Pipe], birds: List[Bird], num_alive):
         """Update the position of the bird and the pipes in the game window"""
         self.window.blit(self.background_img, (0, 0))
 
@@ -77,6 +83,9 @@ class Game:
             pipe.draw(self.window)
 
         self.ground.draw(self.window)
+
+        num_alive_display = self.font.render("Alive: {}".format(num_alive), True, (255, 255, 255))
+        self.window.blit(num_alive_display, (10, 10))
         pygame.display.update()
 
     def evaluate_pipes(self, pipes: List[Pipe], bird: Bird) -> Tuple[Pipe, bool, bool]:
@@ -126,6 +135,7 @@ class Game:
         birds: List[Bird] = []
         scores = []
         for genome in genomes:
+            genome.fitness = 0
             neural_nets.append(FeedForwardNet.create(genome, config))
             birds.append(Bird(self.BIRD_START_X, self.BIRD_START_Y, self.bird_img))
             scores.append(0)
@@ -146,7 +156,7 @@ class Game:
 
                 if passed_pipe:
                     scores[i] += 1
-                    genomes[i].fitness += 3
+                    genomes[i].fitness += 5
 
                 if is_colliding:
                     curr_bird.alive = False
@@ -163,8 +173,8 @@ class Game:
                 # use the height of the bird and the distance to the top and bottom
                 # pipe as the weights for the input neurons
                 input_weights = [curr_bird.pos_y,
-                                 abs(curr_bird.pos_y - next_pipe.top_y),
-                                 abs(curr_bird.pos_y - next_pipe.bottom_y)]
+                                 curr_bird.pos_y - next_pipe.top_y,
+                                 curr_bird.pos_y - next_pipe.bottom_y]
 
                 outputs = neural_nets[i].activate(input_weights)
                 if outputs[0] > self.TANH_THRESHOLD:
@@ -173,7 +183,7 @@ class Game:
                 # give extra 0.1 fitness for each frame the bird survives
                 genomes[i].fitness += 0.1
 
-            self.update_window(pipes, birds)
+            self.update_window(pipes, birds, num_alive)
 
         print(scores)
         self.high_score = max(self.high_score, max(scores))
@@ -206,8 +216,7 @@ class Game:
             if passed_pipe:
                 score += 1
 
-            bird.move()
-            self.update_window(pipes, [bird])
+            self.update_window(pipes, [bird], 1)
 
         pygame.quit()
         return score

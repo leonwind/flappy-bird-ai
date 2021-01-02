@@ -15,6 +15,7 @@ class Config:
             num_of_generations,
             species_difference,
             genomes_to_save,
+            min_specie_size,
             activation_function
     ):
         """
@@ -45,6 +46,8 @@ class Config:
         The maximum difference between two genomes to be put into the same specie
         :param genomes_to_save:
         The percentage of how many genomes per specie to save
+        :param min_specie_size:
+        The minimum numbers of genomes per specie
         :param activation_function:
         Which activation to use for the neural net
         """
@@ -61,4 +64,5 @@ class Config:
         self.num_of_generations = num_of_generations
         self.species_difference = species_difference
         self.genomes_to_save = genomes_to_save
+        self.min_specie_size = min_specie_size
         self.activation_function = activation_function
