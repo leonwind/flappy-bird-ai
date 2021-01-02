@@ -44,8 +44,6 @@ class FeedForwardNet:
             node_weights[node.id] = inputs[node.id]
             queue.append(node.id)
 
-       # print(self.network_graph)
-
         while queue:
             front = queue.popleft()
             if front in self.output_ids:

@@ -44,12 +44,16 @@ class Specie:
         """
         species_data = []
         for specie in species:
+
+            if len(specie.members) == 0:
+                continue
+
             if len(specie.fitness_history):
                 max_fitness = max(specie.fitness_history)
             else:
                 max_fitness = float("-inf")
 
-            specie.fitness = max([g.fitness for g in specie.members], default=0)
+            specie.fitness = max([g.fitness for g in specie.members])
             specie.fitness_history.append(specie.fitness)
             specie.adjusted_fitness = None
 
@@ -81,5 +85,4 @@ class Specie:
                 num_non_stagnant -= 1
 
             result.append((specie, is_stagnant))
-
         return result

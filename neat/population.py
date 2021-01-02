@@ -69,27 +69,33 @@ class Population:
             min_fitness = float("inf")
             max_fitness = float("-inf")
 
+            remaining_species = []
+
             for specie, is_stagnant in Specie.stagnation(self.species, curr_gen, self.config):
-                if is_stagnant or not specie.members:
+                if is_stagnant or len(specie.members) == 0:
                     self.species.remove(specie)
                 else:
+                    remaining_species.append(specie)
                     for genome in specie.members:
                         min_fitness = min(min_fitness, genome.fitness)
                         max_fitness = max(max_fitness, genome.fitness)
 
+            print(max_fitness, min_fitness)
+
             # should be at least one for adjusted fitness formula
             diff_fitness = max(1, max_fitness - min_fitness)
             sum_adjusted_fitness = 0
-            for specie in self.species:
+            for specie in remaining_species:
                 avg_specie_fitness = np.mean([genome.fitness for genome in specie.members])
                 adjusted_fitness = (avg_specie_fitness - min_fitness) / diff_fitness
+
                 specie.adjusted_fitness = adjusted_fitness
                 sum_adjusted_fitness += adjusted_fitness
 
             new_population: List[Genome] = []
-            for specie in self.species:
+            for specie in remaining_species:
                 if specie.adjusted_fitness > 0:
-                    size = int((specie.adjusted_fitness / sum_adjusted_fitness) * self.config.population_size)
+                    size = max(2, int((specie.adjusted_fitness / sum_adjusted_fitness) * self.config.population_size))
                 else:
                     size = 2
 
@@ -98,26 +104,20 @@ class Population:
                 # kill all old members
                 specie.members = []
 
+                new_population.append(survivors[0])
+                size -= 1
+
                 # keep at least 2 genomes
                 purge_index = max(2, int(self.config.genomes_to_save * len(survivors)))
                 survivors = survivors[:purge_index]
 
-                # TODO: Always add the best genome in specie?
                 for i in range(size):
                     parent_a: Genome = random.choice(survivors)
                     parent_b: Genome = random.choice(survivors)
 
-                    #print(parent_a)
-                    #print(parent_b)
-
                     child: Genome = Crossover.crossover(parent_a, parent_b, self.config)
-                    #print("BEFORE MUTATION")
-                    #print(child)
                     Mutation.mutate(child, self.config)
-                    #print("AFTER MUTATION")
-                    #print(child)
-                    if len(new_population) < self.config.population_size:
-                        new_population.append(child)
+                    new_population.append(child)
 
             for genome in new_population:
                 self._assign_specie(genome, curr_gen)

@@ -21,6 +21,8 @@ class _Functions:
 
     @staticmethod
     def sigmoid(x: float) -> float:
+        if x < 0:
+            return 1 - 1 / (1 + math.exp(x))
         return 1 / (1 + math.exp(-x))
 
     @staticmethod

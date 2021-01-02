@@ -22,7 +22,7 @@ class Game:
     BIRD_START_X = 150
     BIRD_START_Y = 400
     NUM_FPS = 30
-    POPULATION_SIZE = 50
+    POPULATION_SIZE = 2
     TANH_THRESHOLD = 0.5
 
     def __init__(self):
@@ -39,7 +39,7 @@ class Game:
             pygame.image.load(os.path.join(self.IMG_PATH, "bird2.png")).convert_alpha())
 
         self.ground = Ground(self.GROUND_HEIGHT, self.ground_img)
-        self.best_score = None
+        self.high_score = -1
 
     def update_window(self, pipes: List[Pipe], birds: List[Bird]):
         """Update the position of the bird and the pipes in the game window"""
@@ -97,8 +97,8 @@ class Game:
             add_node_mutation_rate=0.05,
             add_connection_mutation_rate=0.5,
             reenable_connection_rate=0.25,
-            species_elitism=2,
-            max_stagnation=20,
+            species_elitism=1,
+            max_stagnation=10,
             population_size=self.POPULATION_SIZE,
             num_input_neurons=3,
             num_output_neurons=1,
@@ -130,12 +130,11 @@ class Game:
             birds.append(Bird(self.BIRD_START_X, self.BIRD_START_Y, self.bird_img))
             scores.append(0)
 
-        print("NUM BIRDS:")
-        print(num_populations)
+        print("NUM BIRDS: {}".format(num_populations))
 
         run = True
         while run:
-            clock.tick(20)
+            clock.tick(self.NUM_FPS)
 
             for i in range(num_populations):
                 curr_bird = birds[i]
@@ -152,6 +151,7 @@ class Game:
                 if is_colliding or self.ground.is_colliding(curr_bird):
                     curr_bird.alive = False
                     genomes[i].fitness -= 1
+                    genomes[i].fitness = max(0, genomes[i].fitness)
                     num_alive -= 1
                     continue
 
@@ -176,9 +176,8 @@ class Game:
             self.update_window(pipes, birds)
 
         print(scores)
-        if self.best_score is None or max(scores) > self.best_score:
-            self.best_score = max(scores)
-        print("HIGHEST SCORE: {}".format(self.best_score))
+        self.high_score = max(self.high_score, max(scores))
+        print("HIGH SCORE: {}".format(self.high_score))
 
     def play_game(self) -> int:
         """Let the user play the game"""
