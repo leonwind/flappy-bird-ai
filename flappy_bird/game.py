@@ -1,20 +1,22 @@
+import argparse
 import os
 from typing import List, Tuple
-import pygame
-import argparse
 
-from flappy_bird.ground import Ground
+import pygame
+
 from flappy_bird.bird import Bird
+from flappy_bird.ground import Ground
 from flappy_bird.pipe import Pipe
 from neat.config import Config
-from neat.population import Population
 from neat.genotype.genome import Genome
 from neat.neural_nets.feed_forward_net import FeedForwardNet
+from neat.population import Population
 
 
 class Game:
     IMG_PATH = "flappy_bird/images/"
-
+    WHITE = (255, 255, 255)
+    BLACK = (0, 0, 0)
     WIDTH = 650
     HEIGHT = 1000
     GROUND_HEIGHT = 850
@@ -37,14 +39,15 @@ class Game:
         self.pipe_img: pygame.Surface = pygame.transform.scale2x(
             pygame.image.load(os.path.join(self.IMG_PATH, "pipe.png")).convert_alpha())
         self.bird_img: pygame.Surface = pygame.transform.scale2x(
-            pygame.image.load(os.path.join(self.IMG_PATH, "bird2.png")).convert_alpha())
+            pygame.image.load(os.path.join(self.IMG_PATH, "bird.png")).convert_alpha())
 
         # init font
         pygame.font.init()
         self.font = pygame.font.SysFont("arial", 30)
 
         self.ground = Ground(self.GROUND_HEIGHT, self.ground_img)
-        self.high_score = -1
+        self.high_score = 0
+        self.generation = 0
 
     def create_population(self):
         """Create a population for the neat algorithm"""
@@ -69,7 +72,7 @@ class Game:
         population: Population = Population.create(config)
         population.run(self.evaluate_genomes)
 
-    def update_window(self, pipes: List[Pipe], birds: List[Bird], num_alive):
+    def update_window(self, pipes: List[Pipe], birds: List[Bird], num_alive=None):
         """Update the position of the bird and the pipes in the game window"""
         self.window.blit(self.background_img, (0, 0))
 
@@ -84,8 +87,14 @@ class Game:
 
         self.ground.draw(self.window)
 
-        num_alive_display = self.font.render("Alive: {}".format(num_alive), True, (255, 255, 255))
-        self.window.blit(num_alive_display, (10, 10))
+        if num_alive is not None:
+            alive_gen_display = self.font.render(
+                "Alive: {}, Curr gen: {}".format(num_alive, self.generation), True, self.BLACK)
+            self.window.blit(alive_gen_display, (10, 900))
+
+        score_display = self.font.render("High score: {}".format(self.high_score), True, self.WHITE)
+        self.window.blit(score_display, (10, 10))
+
         pygame.display.update()
 
     def evaluate_pipes(self, pipes: List[Pipe], bird: Bird) -> Tuple[Pipe, bool, bool]:
@@ -98,18 +107,18 @@ class Game:
         passed_pipe = False
 
         for index, pipe in enumerate(pipes):
+            if pipe.is_colliding(bird):
+                is_colliding = True
+
             if pipe.passed:
                 if pipe.pos_x + self.pipe_img.get_width() <= 0:
                     to_remove.add(index)
                 continue
 
-            if pipe.is_colliding(bird):
-                is_colliding = True
-
             if pipe.pos_x <= self.PIPE_START_X - self.SPACE_BETWEEN_PIPES and len(pipes) < 2:
                 pipes.append(Pipe(self.PIPE_START_X, self.pipe_img))
 
-            if pipe.pos_x <= self.BIRD_START_X:
+            if pipe.pos_x + self.pipe_img.get_width() <= self.BIRD_START_X:
                 pipe.passed = True
                 passed_pipe = True
 
@@ -125,6 +134,7 @@ class Game:
         Play the game based on the output of the neural net for each genome / bird to
         evaluate the genomes
         """
+        self.generation += 1
         clock = pygame.time.Clock()
 
         num_populations = len(genomes)
@@ -139,8 +149,6 @@ class Game:
             neural_nets.append(FeedForwardNet.create(genome, config))
             birds.append(Bird(self.BIRD_START_X, self.BIRD_START_Y, self.bird_img))
             scores.append(0)
-
-        print("NUM BIRDS: {}".format(num_populations))
 
         run = True
         while run and num_alive > 0:
@@ -173,8 +181,8 @@ class Game:
                 # use the height of the bird and the distance to the top and bottom
                 # pipe as the weights for the input neurons
                 input_weights = [curr_bird.pos_y,
-                                 abs(curr_bird.pos_y - next_pipe.top_y),
-                                 abs(curr_bird.pos_y - next_pipe.bottom_y)]
+                                 curr_bird.pos_y - next_pipe.top_y,
+                                 curr_bird.pos_y - next_pipe.bottom_y]
 
                 outputs = neural_nets[i].activate(input_weights)
                 if outputs[0] > self.TANH_THRESHOLD:
@@ -183,10 +191,8 @@ class Game:
                 # give extra 0.1 fitness for each frame the bird survives
                 genomes[i].fitness += 0.1
 
+            self.high_score = max(self.high_score, max(scores))
             self.update_window(pipes, birds, num_alive)
-
-        self.high_score = max(self.high_score, max(scores))
-        print("HIGH SCORE: {}".format(self.high_score))
 
     def play_game(self) -> int:
         """Let the user play the game"""
@@ -195,7 +201,6 @@ class Game:
         bird = Bird(self.BIRD_START_X, self.BIRD_START_Y, self.bird_img)
         pipes = [Pipe(self.PIPE_START_X, self.pipe_img)]
 
-        score = 0
         run = True
         while run:
             clock.tick(self.NUM_FPS)
@@ -213,12 +218,12 @@ class Game:
                 run = False
 
             if passed_pipe:
-                score += 1
+                self.high_score += 1
 
             self.update_window(pipes, [bird], 1)
 
         pygame.quit()
-        return score
+        return self.high_score
 
 
 if __name__ == "__main__":

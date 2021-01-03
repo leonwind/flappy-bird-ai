@@ -1,12 +1,10 @@
 from __future__ import annotations
-from typing import List, Dict, Tuple, Set
-from collections import deque
+from typing import List, Set
 
 from neat.neural_nets.activations import Activations
 from neat.neural_nets.activations import ActivationFunction
 from neat.config import Config
 from neat.genotype.genome import Genome
-from neat.genotype.genome_node import GenomeNode
 from neat.genotype.genome_edge import GenomeEdge
 
 
@@ -48,15 +46,17 @@ class FeedForwardNet:
 
         return [values[i] for i in self.output_neurons]
 
+    def __str__(self):
+        return self.neural_net.__str__()
+
     @staticmethod
     def create(genome: Genome, config: Config) -> FeedForwardNet:
-        """Receives a genome and returns its phenotype (Feed forward neural net)"""
+        """Create a feed forward net from a genome"""
         input_neurons = [node.id for node in genome.nodes if node.type == "input"]
         output_neurons = [node.id for node in genome.nodes if node.type == "output"]
 
         layers = FeedForwardNet.create_layers(input_neurons, output_neurons, genome.edges)
         neural_net = []
-
         for layer in layers:
             for node in layer:
                 inputs = []
@@ -72,9 +72,8 @@ class FeedForwardNet:
         return FeedForwardNet(input_neurons, output_neurons, neural_net, Activations.get(config.activation_function))
 
     @staticmethod
-    def create_layers(inputs, outputs, edges: List[GenomeEdge]) -> List[Set[int]]:
+    def create_layers(inputs: List[int], outputs: List[int], edges: List[GenomeEdge]) -> List[Set[int]]:
         """Return all the layers of the feed forward network"""
-
         layers = []
         visited = set(inputs)
 
@@ -96,7 +95,7 @@ class FeedForwardNet:
         return layers
 
     @staticmethod
-    def required_for_output(inputs, outputs, edges: List[GenomeEdge]):
+    def required_for_output(inputs: List[int], outputs: List[int], edges: List[GenomeEdge]):
         """Return all nodes which are necessary for the output nodes"""
         required = set(outputs)
         visited = set(outputs)

@@ -7,7 +7,7 @@ from itertools import count
 
 from neat.config import Config
 from neat.genotype.genome import Genome
-from neat.specie import Specie, SpeciesContainer
+from neat.specie import SpeciesContainer
 from neat.crossover import crossover
 from neat.mutation import mutate
 import neat.stagnation as stagnation
@@ -28,7 +28,6 @@ class Population:
 
     def run(self, evaluation_function):
         for curr_gen in range(self.config.num_of_generations):
-            print("GENERATION: {}".format(curr_gen))
             # run flappy bird and change the fitness of each genome depending how good
             # the bird of the genome plays
             evaluation_function(list(self.population.values()), self.config)

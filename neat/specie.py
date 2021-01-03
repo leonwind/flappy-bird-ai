@@ -32,7 +32,6 @@ class SpeciesContainer:
         self.specie_indexer = count(1)
         # a lookup from genome to specie based on the
         # genome_indexer and the specie_indexer as the ids
-        self.genome_specie_lookup: Dict[int, int] = {}
         self.config: Config = config
 
     def assign_specie(self, population: Dict[int, Genome], curr_gen):
@@ -81,8 +80,6 @@ class SpeciesContainer:
                 new_members[new_specie_id] = [genome]
 
         # Update class instance SpecieCollection
-        # self.genome_specie_lookup = {}
-
         for specie_id, representative_id in new_representatives.items():
             specie = self.species.get(specie_id)
 

@@ -1,4 +1,4 @@
-import random
+import numpy as np
 import neat.utils as utils
 
 
@@ -12,7 +12,7 @@ class GenomeNode:
         self.generate_random_bias()
 
     def generate_random_bias(self):
-        self.bias = random.uniform(-2, 2)
+        self.bias = np.random.normal(0, 1)
 
     def mutate(self):
         self.bias += utils.rand_uni_val() * utils.pos_or_neg()

@@ -1,5 +1,7 @@
 import random
+
 import pygame
+
 from flappy_bird.bird import Bird
 
 
