@@ -14,21 +14,15 @@ class FeedForwardNet:
 
     def __init__(
             self,
-            input_neurons: List[GenomeNode],
-            output_neurons: List[GenomeNode],
-            output_ids: Set[int],
-            bias: Dict[int, float],
-            network_graph: Dict[int, List[Tuple[int, float]]],
-            activation_function: ActivationFunction,
-            config: Config
+            input_neurons: List[int],
+            output_neurons: List[int],
+            neural_net,
+            activation_function: ActivationFunction
     ):
-        self.input_neurons: List[GenomeNode] = input_neurons
-        self.output_neurons: List[GenomeNode] = output_neurons
-        self.output_ids: Set[int] = output_ids
-        self.bias: Dict[int, float] = bias
-        self.network_graph: Dict[int, List[Tuple[int, float]]] = network_graph
+        self.input_neurons = input_neurons
+        self.output_neurons = output_neurons
+        self.neural_net = neural_net
         self.activation_function: ActivationFunction = activation_function
-        self.config: Config = config
 
     def activate(self, inputs) -> List[float]:
         """
@@ -40,69 +34,89 @@ class FeedForwardNet:
             raise RuntimeError(
                 "Expected {0:n} inputs, got {1:n}".format(len(self.input_neurons), len(inputs)))
 
-        node_weights = {}
-        queue = deque()
-        for node, value in zip(self.input_neurons, inputs):
-            node_weights[node.id] = inputs[node.id]
-            queue.append(node.id)
+        values = {}
+        for input_ids, value in zip(self.input_neurons, inputs):
+            values[input_ids] = value
 
-        while queue:
-            front = queue.popleft()
-            if front in self.output_ids:
-                continue
+        for node_id, bias, links in self.neural_net:
+            node_inputs = []
 
-            for neighbor, edge_weight in self.network_graph[front]:
-                if neighbor in node_weights:
-                    node_weights[neighbor] *= edge_weight
-                    node_weights[neighbor] += self.bias[neighbor]
-                else:
-                    node_weights[neighbor] = node_weights[front] * edge_weight + self.bias[neighbor]
+            for prev, weights in links:
+                node_inputs.append(values[prev] * weights)
 
-                node_weights[neighbor] = self.activation_function(node_weights[neighbor])
-                queue.append(neighbor)
+            values[node_id] = self.activation_function(bias + sum(node_inputs))
 
-        return [node_weights[node.id] for node in self.output_neurons]
+        return [values[i] for i in self.output_neurons]
 
     @staticmethod
     def create(genome: Genome, config: Config) -> FeedForwardNet:
         """Receives a genome and returns its phenotype (Feed forward neural net)"""
-        print(genome)
+        input_neurons = [node.id for node in genome.nodes if node.type == "input"]
+        output_neurons = [node.id for node in genome.nodes if node.type == "output"]
 
-        input_nodes = []
-        output_nodes = []
-        bias = {}
-        output_ids = set()
+        layers = FeedForwardNet.create_layers(input_neurons, output_neurons, genome.edges)
+        neural_net = []
 
-        for node in genome.nodes:
-            if node.type == "input":
-                input_nodes.append(node)
-                bias[node.id] = node.bias
-            elif node.type == "output":
-                output_nodes.append(node)
-                output_ids.add(node.id)
-                bias[node.id] = 0
-            else:
-                bias[node.id] = node.bias
+        for layer in layers:
+            for node in layer:
+                inputs = []
+                for edge in genome.edges:
+                    from_id, to_id = edge.from_id, edge.to_id
 
-        edges: List[GenomeEdge] = [edge for edge in genome.edges if edge.is_enabled]
-        network_graph: Dict[int, List[Tuple[int, float]]] = {}
+                    if to_id == node:
+                        inputs.append((from_id, edge.weight))
 
-        for edge in edges:
-            if edge.from_id in network_graph:
-                network_graph[edge.from_id].append((edge.to_id, edge.weight))
-            else:
-                network_graph[edge.from_id] = [(edge.to_id, edge.weight)]
+                genome_node = genome.get_node_by_id(node)
+                neural_net.append((node, genome_node.bias, inputs))
 
-        activation_function = Activations.get(config.activation_function)
-        return FeedForwardNet(
-            input_nodes,
-            output_nodes,
-            output_ids,
-            bias,
-            network_graph,
-            activation_function,
-            config
-        )
+        return FeedForwardNet(input_neurons, output_neurons, neural_net, Activations.get(config.activation_function))
 
-    def __str__(self):
-        return self.network_graph.__str__()
+    @staticmethod
+    def create_layers(inputs, outputs, edges: List[GenomeEdge]) -> List[Set[int]]:
+        """Return all the layers of the feed forward network"""
+
+        layers = []
+        visited = set(inputs)
+
+        required = FeedForwardNet.required_for_output(inputs, outputs, edges)
+
+        while True:
+            neighbors = set(edge.to_id for edge in edges if edge.from_id in visited and edge.to_id not in visited)
+
+            next_layer = set()
+            for node in neighbors:
+                if node in required and all(edge.from_id in visited for edge in edges if edge.to_id == node):
+                    next_layer.add(node)
+
+            if not next_layer:
+                break
+
+            layers.append(next_layer)
+            visited = visited.union(next_layer)
+        return layers
+
+    @staticmethod
+    def required_for_output(inputs, outputs, edges: List[GenomeEdge]):
+        """Return all nodes which are necessary for the output nodes"""
+        required = set(outputs)
+        visited = set(outputs)
+
+        while True:
+            prev_layer = set(edge.from_id for edge in edges if edge.to_id in visited and edge.from_id not in visited)
+
+            if not prev_layer:
+                break
+
+            layer_nodes = set()
+            for prev_id in prev_layer:
+                for node in inputs:
+                    if prev_id != node:
+                        layer_nodes.add(prev_id)
+
+            if not layer_nodes:
+                break
+
+            required = required.union(layer_nodes)
+            visited = visited.union(prev_layer)
+
+        return required

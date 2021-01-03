@@ -49,8 +49,8 @@ class Game:
     def create_population(self):
         """Create a population for the neat algorithm"""
         config: Config = Config(
-            connection_mutation_rate=0.8,
-            change_weight_mutation_rate=0.9,
+            change_weight_mutation=0.7,
+            replace_weight_mutation=0.4,
             add_node_mutation_rate=0.1,
             add_connection_mutation_rate=0.5,
             reenable_connection_rate=0.25,

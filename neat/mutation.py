@@ -11,22 +11,20 @@ def mutate(genome: Genome, config: Config):
     :param genome: The genome to mutate
     :param config: The configuration with the mutation parameters
     """
-    if utils.rand_uni_val() < config.connection_mutation_rate:
-        for edge in genome.edges:
-            if utils.rand_uni_val() < config.change_weight_mutation_rate:
-                difference = utils.rand_uni_val() * utils.pos_or_neg()
-                edge.weight += difference
-            else:
-                edge.generate_random_weight()
-
-        for node in genome.nodes:
-            if utils.rand_uni_val() < config.change_weight_mutation_rate:
-                node.mutate()
-            else:
-                node.generate_random_bias()
-
     if utils.rand_uni_val() < config.add_node_mutation_rate:
         genome.mutate_add_node()
 
     if utils.rand_uni_val() < config.add_connection_mutation_rate:
         genome.mutate_add_edge()
+
+    for node in genome.nodes:
+        if utils.rand_uni_val() < config.change_weight_mutation:
+            node.mutate()
+        if utils.rand_uni_val() < config.replace_weight_mutation:
+            node.generate_random_bias()
+
+    for edge in genome.edges:
+        if utils.rand_uni_val() < config.change_weight_mutation:
+            edge.mutate()
+        if utils.rand_uni_val() < config.replace_weight_mutation:
+            edge.generate_random_weight()

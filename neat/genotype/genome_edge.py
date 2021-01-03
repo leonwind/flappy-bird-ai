@@ -1,4 +1,5 @@
 import numpy as np
+import neat.utils as utils
 
 
 class GenomeEdge:
@@ -15,6 +16,9 @@ class GenomeEdge:
 
     def generate_random_weight(self):
         self.weight = np.random.normal(0, 1)
+
+    def mutate(self):
+        self.weight += utils.rand_uni_val() * utils.pos_or_neg()
 
     def _calculate_innovation_num(self):
         """Generate unique innovation number for two nodes by using Cantors pairing function"""
