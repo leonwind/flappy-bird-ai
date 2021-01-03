@@ -1,10 +1,9 @@
-from typing import List
 import numpy as np
-from neat.specie import Specie
+from neat.specie import SpeciesContainer
 from neat.config import Config
 
 
-def stagnation(species: List[Specie], generation, config: Config):
+def stagnation(species: SpeciesContainer, generation, config: Config):
     """
     Keeps track of whether species are making progress
     and helps remove ones that are not.
@@ -12,7 +11,7 @@ def stagnation(species: List[Specie], generation, config: Config):
     Source: https://github.com/CodeReclaimers/neat-python/blob/master/neat/stagnation.py
     """
     species_data = []
-    for specie in species:
+    for specie_id, specie in species.species.items():
 
         if not len(specie.members):
             continue
@@ -30,13 +29,13 @@ def stagnation(species: List[Specie], generation, config: Config):
         if max_fitness < specie.fitness:
             specie.last_improved = generation
 
-        species_data.append(specie)
+        species_data.append((specie_id, specie))
 
-    species_data.sort(key=lambda s: s.fitness)
+    species_data.sort(key=lambda s: s[1].fitness)
 
     result = []
     num_non_stagnant = len(species_data)
-    for index, specie in enumerate(species_data):
+    for index, (specie_id, specie) in enumerate(species_data):
         # Override stagnant state if marking this species as stagnant would
         # result in the total number of species dropping below the limit.
         # Because species are in ascending fitness order, less fit species
@@ -54,5 +53,5 @@ def stagnation(species: List[Specie], generation, config: Config):
         if is_stagnant:
             num_non_stagnant -= 1
 
-        result.append((specie, is_stagnant))
+        result.append((specie_id, specie, is_stagnant))
     return result

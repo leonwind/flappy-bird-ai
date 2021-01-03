@@ -26,7 +26,7 @@ def _calculate_node_distance(genome_a: Genome, genome_b: Genome) -> float:
         if node_b.id not in genome_a.node_ids:
             node_distance += 1
 
-    return node_distance #/ max(len(genome_a.nodes), len(genome_b.nodes))
+    return node_distance / max(len(genome_a.nodes), len(genome_b.nodes))
 
 
 def _calculate_edge_distance(genome_a: Genome, genome_b: Genome) -> float:
@@ -40,4 +40,4 @@ def _calculate_edge_distance(genome_a: Genome, genome_b: Genome) -> float:
         if edge_b.innovation_num not in genome_a.innovation_nums:
             edge_distance += 1
 
-    return edge_distance #/ max(len(genome_a.edges), len(genome_b.edges))
+    return edge_distance / max(len(genome_a.edges), len(genome_b.edges))

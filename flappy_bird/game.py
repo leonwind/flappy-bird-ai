@@ -60,7 +60,7 @@ class Game:
             num_input_neurons=3,
             num_output_neurons=1,
             num_of_generations=150,
-            species_difference=5,
+            species_difference=3,
             genomes_to_save=0.4,
             min_specie_size=2,
             activation_function="tanh"
@@ -173,8 +173,8 @@ class Game:
                 # use the height of the bird and the distance to the top and bottom
                 # pipe as the weights for the input neurons
                 input_weights = [curr_bird.pos_y,
-                                 curr_bird.pos_y - next_pipe.top_y,
-                                 curr_bird.pos_y - next_pipe.bottom_y]
+                                 abs(curr_bird.pos_y - next_pipe.top_y),
+                                 abs(curr_bird.pos_y - next_pipe.bottom_y)]
 
                 outputs = neural_nets[i].activate(input_weights)
                 if outputs[0] > self.TANH_THRESHOLD:
@@ -185,7 +185,6 @@ class Game:
 
             self.update_window(pipes, birds, num_alive)
 
-        print(scores)
         self.high_score = max(self.high_score, max(scores))
         print("HIGH SCORE: {}".format(self.high_score))
 

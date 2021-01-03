@@ -28,8 +28,8 @@ class Genome:
 
             self.create_new_edge(from_node.id, to_node.id)
 
-            #possible_inputs.remove(from_node)
-            #possible_outputs.remove(to_node)
+            # possible_inputs.remove(from_node)
+            # possible_outputs.remove(to_node)
 
     def mutate_add_node(self):
         """

@@ -1,56 +1,54 @@
 from __future__ import annotations
-from typing import List, Tuple
+from typing import List, Dict
 import numpy as np
 import random
 import math
+from itertools import count
 
 from neat.config import Config
 from neat.genotype.genome import Genome
-import neat.genotype.distance as distance
-from neat.specie import Specie
-import neat.crossover as crossover
-import neat.mutation as mutation
+from neat.specie import Specie, SpeciesContainer
+from neat.crossover import crossover
+from neat.mutation import mutate
 import neat.stagnation as stagnation
 
 
 class Population:
 
-    def __init__(self, population: List[Genome], species: List[Specie], config: Config):
-        self.population: List[Genome] = population
-        self.species: List[Specie] = species
+    def __init__(self, population: Dict[int, Genome], genome_indexer, config: Config):
+        self.population: Dict[int, Genome] = population
+        self.species: SpeciesContainer = SpeciesContainer(config)
+        # genome_indexer is a count object
+        # could not find any type hint for an iterator
+        self.genome_indexer = genome_indexer
         self.config: Config = config
-        self.best_fitness = float("-inf")
+
+        # assign each genome a specie
+        self.species.assign_specie(self.population, 0)
 
     def run(self, evaluation_function):
         for curr_gen in range(self.config.num_of_generations):
             print("GENERATION: {}".format(curr_gen))
             # run flappy bird and change the fitness of each genome depending how good
             # the bird of the genome plays
-            evaluation_function(self.population, self.config)
+            evaluation_function(list(self.population.values()), self.config)
+
             # Generate a new population by reproducing the non stagnated species
-            for genome in self.population:
-                self.best_fitness = max(self.best_fitness, genome.fitness)
+            self.reproduce(curr_gen)
 
-            self.population = self._reproduce(self.species, curr_gen, self.config)
-            self.species = self._assign_specie(self.population, [], curr_gen, self.config)
+            # Assign each genome in the new population a new specie again
+            self.species.assign_specie(self.population, curr_gen)
 
-            print("BEST FITNESS:")
-            print(self.best_fitness)
-
-    @staticmethod
-    def _reproduce(species: List[Specie], curr_gen, config: Config) -> List[Genome]:
+    def reproduce(self, curr_gen):
         """
         Filter out stagnated species and crossover the remaining species
         # Source: https://github.com/CodeReclaimers/neat-python/blob/master/neat/reproduction.py#L84
         """
         min_fitness = float("inf")
         max_fitness = float("-inf")
-        print("NUMBER SPECIES: " + str(len(species)))
-        for specie in species:
-            print("NUM SPECIE MEMBERS: " + str(len(specie.members)))
         remaining_species = []
 
-        for specie, is_stagnant in stagnation.stagnation(species, curr_gen, config):
+        for specie_id, specie, is_stagnant in stagnation.stagnation(self.species, curr_gen, self.config):
             if not is_stagnant:
                 remaining_species.append(specie)
                 for genome in specie.members:
@@ -58,7 +56,7 @@ class Population:
                     max_fitness = max(max_fitness, genome.fitness)
 
         if not remaining_species:
-            return []
+            return
 
         # should be at least one for adjusted fitness formula
         diff_fitness = max(1, max_fitness - min_fitness)
@@ -69,31 +67,37 @@ class Population:
         adjusted_fitnesses = [specie.adjusted_fitness for specie in remaining_species]
         previous_sizes = [len(specie.members) for specie in remaining_species]
         number_offsprings = Population._compute_new_specie_size(
-            adjusted_fitnesses, previous_sizes, config.population_size, config.min_specie_size)
+            adjusted_fitnesses, previous_sizes, self.config.population_size, self.config.min_specie_size)
 
-        new_population: List[Genome] = []
+        new_population: Dict[int, genome] = {}
         for specie, size in zip(remaining_species, number_offsprings):
             survivors = specie.members
             survivors.sort(key=lambda g: g.fitness, reverse=True)
             # kill all old members
             specie.members = []
 
-            for i in range(config.species_elitism):
-                new_population.append(survivors[i])
-                size -= 1
+            for i in range(self.config.species_elitism):
+                if size > 0:
+                    key = next(self.genome_indexer)
+                    new_population[key] = survivors[i]
+                    size -= 1
 
-            purge_index = max(2, math.ceil(config.genomes_to_save * len(survivors)))
+            if size <= 0:
+                continue
+
+            purge_index = max(2, math.ceil(self.config.genomes_to_save * len(survivors)))
             survivors = survivors[:purge_index]
 
             for i in range(size):
                 parent_a: Genome = random.choice(survivors)
                 parent_b: Genome = random.choice(survivors)
 
-                child: Genome = crossover.crossover(parent_a, parent_b, config)
-                mutation.mutate(child, config)
-                new_population.append(child)
+                child: Genome = crossover(parent_a, parent_b, self.config)
+                mutate(child, self.config)
+                key = next(self.genome_indexer)
+                new_population[key] = child
 
-        return new_population
+        self.population = new_population
 
     @staticmethod
     def _compute_new_specie_size(adjusted_fitnesses, previous_sizes, population_size, min_species_size) -> List[int]:
@@ -122,40 +126,9 @@ class Population:
         return [max(min_species_size, round(num_spawns * normalize_factor)) for num_spawns in num_offsprings]
 
     @staticmethod
-    def _assign_specie(genomes: List[Genome], species: List[Specie], curr_gen, config: Config) -> List[Specie]:
-        """
-        Assign a genome its proper specie
-        :param genomes: Genomes to be assigned a specie
-        :param species: Currently existing species, can be empty
-        :param curr_gen: Current generation
-        :return:
-        """
-        for genome in genomes:
-            found_existing_specie = False
-
-            for specie in species:
-                compatibility = distance.calculate_compatibility_score(specie.representative, genome)
-                if compatibility < config.species_difference:
-                    genome.specie = specie.specie_id
-                    specie.members.append(genome)
-                    found_existing_specie = True
-                    break
-
-            if found_existing_specie:
-                continue
-
-            # if no existing specie is similar enough, create a new one
-            new_species = Specie(len(species), curr_gen)
-            new_species.representative = genome
-            new_species.members.append(genome)
-            genome.specie = new_species.specie_id
-            species.append(new_species)
-
-        return species
-
-    @staticmethod
     def create(config: Config) -> Population:
-        population: List[Genome] = []
+        genome_indexer = count(1)
+        population: Dict[int, Genome] = {}
 
         for i in range(config.population_size):
             genome = Genome()
@@ -172,9 +145,7 @@ class Population:
                 for output_node in outputs:
                     genome.create_new_edge(input_node.id, output_node.id)
 
-            population.append(genome)
+            key = next(genome_indexer)
+            population[key] = genome
 
-        species: List[Specie] = []
-        Population._assign_specie(population, species, 0, config)
-
-        return Population(population, species, config)
+        return Population(population, genome_indexer, config)
