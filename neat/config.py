@@ -19,7 +19,10 @@ class Config:
             activation_function
     ):
         """
-
+        :param change_weight_mutation:
+        The rate of which am edge weight or bias gets modified
+        :param replace_weight_mutation:
+        The rate of which an edge weight or bias gets new generated
         :param add_node_mutation_rate:
         The rate of which a new node gets inserted into an existing connection
         :param add_connection_mutation_rate:

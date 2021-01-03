@@ -72,7 +72,7 @@ class Game:
         population: Population = Population.create(config)
         population.run(self.evaluate_genomes)
 
-    def update_window(self, pipes: List[Pipe], birds: List[Bird], num_alive=None):
+    def _update_window(self, pipes: List[Pipe], birds: List[Bird], num_alive=None):
         """Update the position of the bird and the pipes in the game window"""
         self.window.blit(self.background_img, (0, 0))
 
@@ -97,7 +97,7 @@ class Game:
 
         pygame.display.update()
 
-    def evaluate_pipes(self, pipes: List[Pipe], bird: Bird) -> Tuple[Pipe, bool, bool]:
+    def _evaluate_pipes(self, pipes: List[Pipe], bird: Bird) -> Tuple[Pipe, bool, bool]:
         """
         Check for a current bird if it collides with any pipe or passes one
         Also return the nearest pipe in front of the pipe
@@ -160,7 +160,7 @@ class Game:
                 if not curr_bird.alive:
                     continue
 
-                next_pipe, passed_pipe, is_colliding = self.evaluate_pipes(pipes, curr_bird)
+                next_pipe, passed_pipe, is_colliding = self._evaluate_pipes(pipes, curr_bird)
 
                 if passed_pipe:
                     scores[i] += 1
@@ -192,7 +192,7 @@ class Game:
                 genomes[i].fitness += 0.1
 
             self.high_score = max(self.high_score, max(scores))
-            self.update_window(pipes, birds, num_alive)
+            self._update_window(pipes, birds, num_alive)
 
     def play_game(self) -> int:
         """Let the user play the game"""
@@ -212,7 +212,7 @@ class Game:
             if self.ground.is_colliding(bird):
                 run = False
 
-            _, passed_pipe, is_colliding = self.evaluate_pipes(pipes, bird)
+            _, passed_pipe, is_colliding = self._evaluate_pipes(pipes, bird)
 
             if is_colliding:
                 run = False
@@ -220,7 +220,7 @@ class Game:
             if passed_pipe:
                 self.high_score += 1
 
-            self.update_window(pipes, [bird], 1)
+            self._update_window(pipes, [bird])
 
         pygame.quit()
         return self.high_score
