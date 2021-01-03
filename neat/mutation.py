@@ -19,6 +19,12 @@ def mutate(genome: Genome, config: Config):
             else:
                 edge.generate_random_weight()
 
+        for node in genome.nodes:
+            if utils.rand_uni_val() < config.change_weight_mutation_rate:
+                node.mutate()
+            else:
+                node.generate_random_bias()
+
     if utils.rand_uni_val() < config.add_node_mutation_rate:
         genome.mutate_add_node()
 

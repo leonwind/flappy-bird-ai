@@ -17,13 +17,15 @@ class FeedForwardNet:
             input_neurons: List[GenomeNode],
             output_neurons: List[GenomeNode],
             output_ids: Set[int],
+            bias: Dict[int, float],
             network_graph: Dict[int, List[Tuple[int, float]]],
             activation_function: ActivationFunction,
             config: Config
     ):
         self.input_neurons: List[GenomeNode] = input_neurons
         self.output_neurons: List[GenomeNode] = output_neurons
-        self.output_ids = output_ids
+        self.output_ids: Set[int] = output_ids
+        self.bias: Dict[int, float] = bias
         self.network_graph: Dict[int, List[Tuple[int, float]]] = network_graph
         self.activation_function: ActivationFunction = activation_function
         self.config: Config = config
@@ -52,27 +54,35 @@ class FeedForwardNet:
             for neighbor, edge_weight in self.network_graph[front]:
                 if neighbor in node_weights:
                     node_weights[neighbor] *= edge_weight
+                    node_weights[neighbor] += self.bias[neighbor]
                 else:
-                    node_weights[neighbor] = node_weights[front] * edge_weight
+                    node_weights[neighbor] = node_weights[front] * edge_weight + self.bias[neighbor]
+
+                node_weights[neighbor] = self.activation_function(node_weights[neighbor])
                 queue.append(neighbor)
 
-        return [self.activation_function(node_weights[node.id]) for node in self.output_neurons]
+        return [node_weights[node.id] for node in self.output_neurons]
 
     @staticmethod
     def create(genome: Genome, config: Config) -> FeedForwardNet:
         """Receives a genome and returns its phenotype (Feed forward neural net)"""
-        #print(genome)
+        print(genome)
 
         input_nodes = []
         output_nodes = []
+        bias = {}
         output_ids = set()
 
         for node in genome.nodes:
             if node.type == "input":
                 input_nodes.append(node)
+                bias[node.id] = node.bias
             elif node.type == "output":
                 output_nodes.append(node)
                 output_ids.add(node.id)
+                bias[node.id] = 0
+            else:
+                bias[node.id] = node.bias
 
         edges: List[GenomeEdge] = [edge for edge in genome.edges if edge.is_enabled]
         network_graph: Dict[int, List[Tuple[int, float]]] = {}
@@ -88,6 +98,7 @@ class FeedForwardNet:
             input_nodes,
             output_nodes,
             output_ids,
+            bias,
             network_graph,
             activation_function,
             config
