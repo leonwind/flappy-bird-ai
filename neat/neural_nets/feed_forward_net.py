@@ -95,7 +95,7 @@ class FeedForwardNet:
         return layers
 
     @staticmethod
-    def required_for_output(inputs: List[int], outputs: List[int], edges: List[GenomeEdge]):
+    def required_for_output(inputs: List[int], outputs: List[int], edges: List[GenomeEdge]) -> Set[int]:
         """Return all nodes which are necessary for the output nodes"""
         required = set(outputs)
         visited = set(outputs)
